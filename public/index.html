@@ -1,0 +1,243 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quote Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+
+        .quote-box {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .quote-text {
+            font-size: 1.3rem;
+            line-height: 1.6;
+            color: #333;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        .quote-author {
+            font-size: 1.1rem;
+            color: #666;
+            font-weight: bold;
+        }
+
+        .quote-category {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin: 0 10px 10px 0;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            color: #666;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .quote-text {
+                font-size: 1.1rem;
+            }
+            
+            .btn {
+                padding: 12px 25px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌟 Quote Generator</h1>
+        
+        <div class="quote-box">
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                Getting your quote...
+            </div>
+            
+            <div id="quote-content">
+                <div class="quote-text" id="quote-text">
+                    "Click the button below to get an inspirational quote!"
+                </div>
+                <div class="quote-author" id="quote-author">
+                    - Quote Generator
+                </div>
+                <div class="quote-category" id="quote-category">
+                    Welcome
+                </div>
+            </div>
+        </div>
+
+        <div class="buttons">
+            <button class="btn" id="new-quote-btn">Get New Quote</button>
+            <button class="btn" id="copy-btn">📋 Copy</button>
+            <button class="btn" id="tweet-btn">Tweet</button>
+        </div>
+    </div>
+
+    <script>
+        const quoteText = document.getElementById('quote-text');
+        const quoteAuthor = document.getElementById('quote-author');
+        const quoteCategory = document.getElementById('quote-category');
+        const newQuoteBtn = document.getElementById('new-quote-btn');
+        const copyBtn = document.getElementById('copy-btn');
+        const tweetBtn = document.getElementById('tweet-btn');
+        const loading = document.getElementById('loading');
+        const quoteContent = document.getElementById('quote-content');
+
+        // Get new quote
+        async function getNewQuote() {
+            loading.style.display = 'block';
+            quoteContent.style.display = 'none';
+            newQuoteBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/quote');
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                quoteText.textContent = `"${data.quote}"`;
+                quoteAuthor.textContent = `- ${data.author}`;
+                quoteCategory.textContent = data.category || 'Inspiration';
+                
+            } catch (error) {
+                console.error('Error:', error);
+                quoteText.textContent = '"The best way to predict the future is to create it."';
+                quoteAuthor.textContent = '- Abraham Lincoln';
+                quoteCategory.textContent = 'Motivation';
+            }
+
+            loading.style.display = 'none';
+            quoteContent.style.display = 'block';
+            newQuoteBtn.disabled = false;
+        }
+
+        // Copy quote
+        function copyQuote() {
+            const quote = `${quoteText.textContent} ${quoteAuthor.textContent}`;
+            navigator.clipboard.writeText(quote).then(() => {
+                copyBtn.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    copyBtn.textContent = '📋 Copy';
+                }, 2000);
+            });
+        }
+
+        // Tweet quote
+        function tweetQuote() {
+            const quote = `${quoteText.textContent} ${quoteAuthor.textContent}`;
+            const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(quote)}`;
+            window.open(tweetUrl, '_blank');
+        }
+
+        // Event listeners
+        newQuoteBtn.addEventListener('click', getNewQuote);
+        copyBtn.addEventListener('click', copyQuote);
+        tweetBtn.addEventListener('click', tweetQuote);
+
+        // Get initial quote on page load
+        window.addEventListener('load', getNewQuote);
+    </script>
+</body>
+</html>
